@@ -1,5 +1,5 @@
 /*
-  Modified by Matthew Heironimus to support HID Report Descriptors to be in 
+  Modified by Matthew Heironimus to support HID Report Descriptors to be in
   standard RAM in addition to program memory (PROGMEM).
 
   Copyright (c) 2015, Arduino LLC
@@ -22,22 +22,22 @@
 #ifndef DYNAMIC_HID_h
 #define DYNAMIC_HID_h
 
-#include <stdint.h>
 #include <Arduino.h>
+#include <stdint.h>
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
-  // The following values are the same as AVR's USBAPI.h
-  // Reproduced here because SAM doesn't have these in
-  // its own USBAPI.H
-  #define USB_EP_SIZE 64
-  #define TRANSFER_PGM 0x80
+// The following values are the same as AVR's USBAPI.h
+// Reproduced here because SAM doesn't have these in
+// its own USBAPI.H
+#define USB_EP_SIZE 64
+#define TRANSFER_PGM 0x80
 
-  #include "USB/PluggableUSB.h"
+#include "USB/PluggableUSB.h"
 #else
-  #include "PluggableUSB.h"
+#include "PluggableUSB.h"
 #endif
 
-#include "PIDReportHandler.h"
+#include "../FFB/PIDReportHandler.h"
 
 #if defined(USBCON)
 
@@ -45,16 +45,16 @@
 
 // DYNAMIC_HID 'Driver'
 // ------------
-#define DYNAMIC_HID_GET_REPORT        0x01
-#define DYNAMIC_HID_GET_IDLE          0x02
-#define DYNAMIC_HID_GET_PROTOCOL      0x03
-#define DYNAMIC_HID_SET_REPORT        0x09
-#define DYNAMIC_HID_SET_IDLE          0x0A
-#define DYNAMIC_HID_SET_PROTOCOL      0x0B
+#define DYNAMIC_HID_GET_REPORT 0x01
+#define DYNAMIC_HID_GET_IDLE 0x02
+#define DYNAMIC_HID_GET_PROTOCOL 0x03
+#define DYNAMIC_HID_SET_REPORT 0x09
+#define DYNAMIC_HID_SET_IDLE 0x0A
+#define DYNAMIC_HID_SET_PROTOCOL 0x0B
 
-#define DYNAMIC_HID_DESCRIPTOR_TYPE         0x21
-#define DYNAMIC_HID_REPORT_DESCRIPTOR_TYPE      0x22
-#define DYNAMIC_HID_PHYSICAL_DESCRIPTOR_TYPE    0x23
+#define DYNAMIC_HID_DESCRIPTOR_TYPE 0x21
+#define DYNAMIC_HID_REPORT_DESCRIPTOR_TYPE 0x22
+#define DYNAMIC_HID_PHYSICAL_DESCRIPTOR_TYPE 0x23
 
 // HID subclass HID1.11 Page 8 4.2 Subclass
 #define DYNAMIC_HID_SUBCLASS_NONE 0
@@ -65,46 +65,50 @@
 #define DYNAMIC_HID_PROTOCOL_KEYBOARD 1
 #define DYNAMIC_HID_PROTOCOL_MOUSE 2
 
-// Normal or bios protocol (Keyboard/Mouse) HID1.11 Page 54 7.2.5 Get_Protocol Request
-// "protocol" variable is used for this purpose.
-#define DYNAMIC_HID_BOOT_PROTOCOL	0
-#define DYNAMIC_HID_REPORT_PROTOCOL	1
+// Normal or bios protocol (Keyboard/Mouse) HID1.11 Page 54 7.2.5 Get_Protocol
+// Request "protocol" variable is used for this purpose.
+#define DYNAMIC_HID_BOOT_PROTOCOL 0
+#define DYNAMIC_HID_REPORT_PROTOCOL 1
 
 // HID Request Type HID1.11 Page 51 7.2.1 Get_Report Request
-#define DYNAMIC_HID_REPORT_TYPE_INPUT   1
-#define DYNAMIC_HID_REPORT_TYPE_OUTPUT  2
+#define DYNAMIC_HID_REPORT_TYPE_INPUT 1
+#define DYNAMIC_HID_REPORT_TYPE_OUTPUT 2
 #define DYNAMIC_HID_REPORT_TYPE_FEATURE 3
 
 #define PID_ENPOINT_COUNT 2
 
-#define PID_ENDPOINT_IN	 (pluggedEndpoint)
-#define PID_ENDPOINT_OUT (pluggedEndpoint+1)
+#define PID_ENDPOINT_IN (pluggedEndpoint)
+#define PID_ENDPOINT_OUT (pluggedEndpoint + 1)
 
-typedef struct
-{
-  uint8_t len;      // 9
-  uint8_t dtype;    // 0x21
+typedef struct {
+  uint8_t len;    // 9
+  uint8_t dtype;  // 0x21
   uint8_t addr;
-  uint8_t versionL; // 0x101
-  uint8_t versionH; // 0x101
+  uint8_t versionL;  // 0x101
+  uint8_t versionH;  // 0x101
   uint8_t country;
-  uint8_t desctype; // 0x22 report
+  uint8_t desctype;  // 0x22 report
   uint8_t descLenL;
   uint8_t descLenH;
 } DYNAMIC_HIDDescDescriptor;
 
-typedef struct 
-{
+typedef struct {
   InterfaceDescriptor hid;
-  DYNAMIC_HIDDescDescriptor   desc;
-  EndpointDescriptor  in;
-  EndpointDescriptor  out;
+  DYNAMIC_HIDDescDescriptor desc;
+  EndpointDescriptor in;
+  EndpointDescriptor out;
 } DYNAMIC_HIDDescriptor;
 
 class DynamicHIDSubDescriptor {
-public:
-  DynamicHIDSubDescriptor *next = NULL;
-  DynamicHIDSubDescriptor(const void *d, const uint16_t l, const void* pid_d, const uint16_t pid_l, const bool ipm = true) : data(d), length(l),pid_data(pid_d), pid_length(pid_l), inProgMem(ipm) { }
+ public:
+  DynamicHIDSubDescriptor* next = NULL;
+  DynamicHIDSubDescriptor(const void* d, const uint16_t l, const void* pid_d,
+                          const uint16_t pid_l, const bool ipm = true)
+      : data(d),
+        length(l),
+        pid_data(pid_d),
+        pid_length(pid_l),
+        inProgMem(ipm) {}
 
   const void* data;
   const void* pid_data;
@@ -113,9 +117,8 @@ public:
   const bool inProgMem;
 };
 
-class DynamicHID_ : public PluggableUSBModule
-{
-public:
+class DynamicHID_ : public PluggableUSBModule {
+ public:
   DynamicHID_(void);
   int begin(void);
   bool usb_Available();
@@ -123,9 +126,9 @@ public:
   int RecvData(byte* data);
   void RecvfromUsb();
   void AppendDescriptor(DynamicHIDSubDescriptor* node);
-  PIDReportHandler pidReportHandler;
+  PIDReportHandler& GetPIDReportHandler() { return pidReportHandler; }
 
-protected:
+ protected:
   // Implementation of the PluggableUSBModule
   int getInterface(uint8_t* interfaceCount);
   int getDescriptor(USBSetup& setup);
@@ -134,7 +137,7 @@ protected:
   bool setup(USBSetup& setup);
   uint8_t getShortName(char* name);
 
-private:
+ private:
   uint8_t epType[2];
 
   DynamicHIDSubDescriptor* rootNode;
@@ -142,6 +145,8 @@ private:
 
   uint8_t protocol;
   uint8_t idle;
+
+  PIDReportHandler pidReportHandler;
 };
 
 // Replacement for global singleton.
@@ -149,8 +154,9 @@ private:
 // https://isocpp.org/wiki/faq/ctors#static-init-order-on-first-use
 DynamicHID_& DynamicHID();
 
-#define D_HIDREPORT(length) { 9, 0x21, 0x11, 0x01, 0, 1, 0x22, lowByte(length), highByte(length) }
+#define D_HIDREPORT(length) \
+  { 9, 0x21, 0x11, 0x01, 0, 1, 0x22, lowByte(length), highByte(length) }
 
-#endif // USBCON
+#endif  // USBCON
 
-#endif // DYNAMIC_HID_h
+#endif  // DYNAMIC_HID_h
