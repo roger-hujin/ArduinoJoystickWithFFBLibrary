@@ -719,19 +719,28 @@ int32_t Joystick_::ConditionForceCalculator(volatile TEffectState& effect, float
     positiveSaturation = effect.conditions[axis].positiveSaturation;
     positiveCoefficient = effect.conditions[axis].positiveCoefficient;
 
+	// Serial.print("Calc Contion: metric=");
+	// Serial.print(metric);
+	// Serial.print(", cpOffset=");
+	// Serial.print(cpOffset);
+	// Serial.print(", posCoeff=");
+	// Serial.print(positiveCoefficient);
+	// Serial.print(", negCoeff=");
+	// Serial.print(negativeCoefficient);
+
 	float  tempForce = 0;
 	if (metric < (cpOffset - deadBand)) 
 	{
-		tempForce = (metric - (float)1.00*(cpOffset - deadBand)/10000) * negativeCoefficient;
+		tempForce = (metric - 1.00f*(cpOffset - deadBand)) * (negativeCoefficient/10000.0f);
 		tempForce = (tempForce < -negativeSaturation ? -negativeSaturation : tempForce);
 	}
 	else if (metric > (cpOffset + deadBand)) 
 	{
-		tempForce = (metric - (float)1.00 * (cpOffset + deadBand) / 10000) * positiveCoefficient;
+		tempForce = (metric - 1.0f * (cpOffset + deadBand)) * (positiveCoefficient/10000.0f);
 		tempForce = (tempForce > positiveSaturation ? positiveSaturation : tempForce);
 	}
 	else return 0;
-	tempForce = -tempForce * effect.gain / 255;
+	tempForce = -tempForce * effect.gain / 255.0f;
 	switch (effect.effectType) {
 	case  USB_EFFECT_DAMPER:
 		//tempForce = damperFilter.filterIn(tempForce);
@@ -745,11 +754,13 @@ int32_t Joystick_::ConditionForceCalculator(volatile TEffectState& effect, float
 	default:
 		break;
 	}
+    // Serial.print(", force=");
+	// Serial.println((int32_t)tempForce);
 	return (int32_t)tempForce;
 }
 
 float Joystick_::NormalizeRange(int32_t x, int32_t maxValue) {
-	return (float)x * 1.00 / maxValue;
+	return ((float)x * 1.00 / maxValue) * 20000.0f - 10000.0f;
 }
 
 int32_t  Joystick_::ApplyGain(int16_t value, uint8_t gain)

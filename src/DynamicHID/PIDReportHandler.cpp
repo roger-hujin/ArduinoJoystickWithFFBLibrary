@@ -232,6 +232,14 @@ void PIDReportHandler::CreateNewEffect(USB_FFBReport_CreateNewEffect_Feature_Dat
 	}
 }
 
+void dumpData(uint8_t* data, uint16_t len) {
+	for (uint16_t i = 0; i < len; i++) {
+		Serial.print(data[i], HEX);
+		Serial.print(",");
+	}
+	Serial.println("");
+}
+
 void PIDReportHandler::UppackUsbData(uint8_t* data, uint16_t len)
 {
 	//Serial.print("len:");
@@ -242,57 +250,70 @@ void PIDReportHandler::UppackUsbData(uint8_t* data, uint16_t len)
 	switch (data[0])    // reportID
 	{
 	case 1:
-		//Serial.println("SetEffect");
+		Serial.println("SetEffect");
+		dumpData(data, len);
 		SetEffect((USB_FFBReport_SetEffect_Output_Data_t*)data);
 		break;
 	case 2:
-		//Serial.println("SetEnvelop");
+		Serial.println("SetEnvelop");
+		dumpData(data, len);
 		SetEnvelope((USB_FFBReport_SetEnvelope_Output_Data_t*)data, &g_EffectStates[effectId]);
 		break;
 	case 3:
-		//Serial.println("SetCondition");
+		Serial.println("SetCondition");
+		dumpData(data, len);		
 		SetCondition((USB_FFBReport_SetCondition_Output_Data_t*)data, &g_EffectStates[effectId]);
 		break;
 	case 4:
-		//Serial.println("SetPeriodic");
+		Serial.println("SetPeriodic");
+		dumpData(data, len);
 		SetPeriodic((USB_FFBReport_SetPeriodic_Output_Data_t*)data, &g_EffectStates[effectId]);
 		break;
 	case 5:
-		//Serial.println("SetConstantForce");
+		Serial.println("SetConstantForce");
+		dumpData(data, len);
 		SetConstantForce((USB_FFBReport_SetConstantForce_Output_Data_t*)data, &g_EffectStates[effectId]);
 		break;
 	case 6:
-		//Serial.println("SetRampForce");
+		Serial.println("SetRampForce");
+		dumpData(data, len);
 		SetRampForce((USB_FFBReport_SetRampForce_Output_Data_t*)data, &g_EffectStates[effectId]);
 		break;
 	case 7:
-		//Serial.println("SetCustomForceData");
+		Serial.println("SetCustomForceData");
+		dumpData(data, len);
 		SetCustomForceData((USB_FFBReport_SetCustomForceData_Output_Data_t*)data);
 		break;
 	case 8:
-		//Serial.println("SetDownloadForceSample");
+		Serial.println("SetDownloadForceSample");
+		dumpData(data, len);
 		SetDownloadForceSample((USB_FFBReport_SetDownloadForceSample_Output_Data_t*)data);
 		break;
 	case 9:
 		break;
 	case 10:
-		//Serial.println("EffectOperation");
+		Serial.println("EffectOperation");
+		dumpData(data, len);
 		EffectOperation((USB_FFBReport_EffectOperation_Output_Data_t*)data);
 		break;
 	case 11:
-		//Serial.println("BlockFree");
+		Serial.println("BlockFree");
+		dumpData(data, len);
 		BlockFree((USB_FFBReport_BlockFree_Output_Data_t*)data);
 		break;
 	case 12:
-		//Serial.println("DeviceControl");
+		Serial.println("DeviceControl");
+		dumpData(data, len);
 		DeviceControl((USB_FFBReport_DeviceControl_Output_Data_t*)data);
 		break;
 	case 13:
-		//Serial.println("DeviceGain");
+		Serial.println("DeviceGain");
+		dumpData(data, len);
 		DeviceGain((USB_FFBReport_DeviceGain_Output_Data_t*)data);
 		break;
 	case 14:
-		//Serial.println("SetCustomForce");
+		Serial.println("SetCustomForce");
+		dumpData(data, len);
 		SetCustomForce((USB_FFBReport_SetCustomForce_Output_Data_t*)data);
 		break;
 	default:
