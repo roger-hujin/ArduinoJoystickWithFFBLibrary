@@ -2,7 +2,6 @@
 
 #include <Arduino.h>
 
-#include "FFB/PIDReportHandler.h"
 #include "FFB/PIDReportType.h"
 
 #define FORCE_FEEDBACK_MAXGAIN 100
@@ -45,7 +44,40 @@ class FFB : public EffectModule {
   // force feedback effect params
   EffectParams* m_effect_params;
 
-  /// force calculate funtion
+  // effect blocks
+  volatile TEffectState effectStates[MAX_EFFECTS + 1];
+
+  // device control
+  volatile uint8_t devicePaused;
+
+  volatile uint8_t actuatorEnabled;
+
+  volatile uint8_t deviceGain;
+
+  // effect control
+  void SetEffect(USB_FFBReport_SetEffect_Output_Data_t* data);
+  void StartEffect(uint8_t id);
+  void StopEffect(uint8_t id);
+  void StopAllEffects(void);
+  void FreeEffect(uint8_t id);
+  void FreeAllEffects(void);
+  void EffectOperation(USB_FFBReport_EffectOperation_Output_Data_t* data);
+  void BlockFree(USB_FFBReport_BlockFree_Output_Data_t* data);
+  void DeviceControl(USB_FFBReport_DeviceControl_Output_Data_t* data);
+  void DeviceGain(USB_FFBReport_DeviceGain_Output_Data_t* data);
+
+  // set effect parameters
+  void SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t* data);
+  void SetCondition(USB_FFBReport_SetCondition_Output_Data_t* data);
+  void SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t* data);
+  void SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t* data);
+  void SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t* data);
+  void SetCustomForce(USB_FFBReport_SetCustomForce_Output_Data_t* data);
+  void SetCustomForceData(USB_FFBReport_SetCustomForceData_Output_Data_t* data);
+  void SetDownloadForceSample(
+      USB_FFBReport_SetDownloadForceSample_Output_Data_t* data);
+
+  /// effect simulatiopn
   float NormalizeRange(int32_t x, int32_t maxValue);
   int32_t ApplyEnvelope(volatile TEffectState& effect, int32_t value);
   int32_t ApplyGain(int16_t value, uint8_t gain);
@@ -58,20 +90,22 @@ class FFB : public EffectModule {
   int32_t SawtoothUpForceCalculator(volatile TEffectState& effect);
   int32_t ConditionForceCalculator(volatile TEffectState& effect, float metric,
                                    uint8_t axis);
-  void forceCalculator(int32_t* forces);
   int32_t getEffectForce(volatile TEffectState& effect, Gains _gains,
                          EffectParams _effect_params, uint8_t axis);
-
-  // set gain functions
-  int8_t setGains(Gains* _gains);
-
-  // set effect params funtions
-  int8_t setEffectParams(EffectParams* _effect_params);
 
  public:
   // force feedback Interfaces
   virtual void ProcessData(uint8_t* data, uint16_t len);
 
+  // set gain functions
+  void setGains(Gains* _gains) { m_gains = _gains; };
+
+  // set effect params funtions
+  void setEffectParams(EffectParams* _effect_params) {
+    m_effect_params = _effect_params;
+  };
+
+  // get the total effect force
   void getForce(int32_t* forces);
 };
 #endif

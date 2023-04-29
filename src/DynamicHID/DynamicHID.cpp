@@ -122,7 +122,7 @@ void DynamicHID_::RecvfromUsb() {
     uint8_t out_ffbdata[64];
     uint16_t len = USB_Recv(PID_ENDPOINT_OUT, &out_ffbdata, 64);
     if (len >= 0) {
-      Serial.println("pidReportHandler.ProcessUsbData");
+      // Serial.println("pidReportHandler.ProcessUsbData");
       pidReportHandler.ProcessUsbData(out_ffbdata, len);
     }
   }
@@ -144,8 +144,8 @@ bool DynamicHID_::GetReport(USBSetup& setup) {
     if ((report_id == 6))  // && (gNewEffectBlockLoad.reportId==6))
     {
       _delay_us(500);
-      Serial.println("pidReportHandler.getPIDBlockLoad");
-      uint8_t buf[5] = {6, 1, 1, 51, 3};
+      // Serial.println("pidReportHandler.getPIDBlockLoad");
+      // uint8_t buf[5] = {6, 1, 1, 51, 3};
       // uint8_t* p = pidReportHandler.getPIDBlockLoad();
       // Serial.print((unsigned long)p, HEX);
       // Serial.println("");
@@ -158,11 +158,12 @@ bool DynamicHID_::GetReport(USBSetup& setup) {
       // }
       // Serial.println("");
 
-      int x = USB_SendControl(TRANSFER_RELEASE, buf, 5);
-      // sizeof(USB_FFBReport_PIDBlockLoad_Feature_Data_t));
-      Serial.println(x);
-      Serial.println("pidReportHandler.clearPIDBlockLoadFlag");
-      // pidReportHandler.clearPIDBlockLoadFlag();
+      int x =
+          USB_SendControl(TRANSFER_RELEASE, pidReportHandler.getPIDBlockLoad(),
+                          sizeof(USB_FFBReport_PIDBlockLoad_Feature_Data_t));
+      // Serial.println(x);
+      // Serial.println("pidReportHandler.clearPIDBlockLoadFlag");
+      pidReportHandler.clearPIDBlockLoadFlag();
       return (true);
     }
     if (report_id == 7) {
@@ -195,7 +196,7 @@ bool DynamicHID_::SetReport(USBSetup& setup) {
       USB_FFBReport_CreateNewEffect_Feature_Data_t ans;
       USB_RecvControl(&ans,
                       sizeof(USB_FFBReport_CreateNewEffect_Feature_Data_t));
-      Serial.println("pidReportHandler.CreateNewEffect");
+      // Serial.println("pidReportHandler.CreateNewEffect");
       pidReportHandler.CreateNewEffect(&ans);
     }
     return (true);

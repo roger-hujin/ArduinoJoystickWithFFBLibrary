@@ -2,208 +2,252 @@
 
 #include "FFB/Utils.h"
 
+void dumpEffect(volatile TEffectState& effect) {
+  Serial.print(" state=");
+  Serial.print(effect.state);
+  Serial.print(" type = ");
+  Serial.print(effect.effectType);
+  Serial.print(" elapsedTime=");
+  Serial.print(effect.elapsedTime);
+  Serial.print(" duration=");
+  Serial.println((unsigned int)effect.duration);
+}
+
 void FFB::ProcessData(uint8_t* data, uint16_t len) {
   LogUsbData(data, len);
 
-  // uint8_t effectId = data[1];  // effectBlockIndex is always the second byte.
-  // switch (data[0])             // reportID
-  // {
-  //   case 1:
-  //     SetEffect((USB_FFBReport_SetEffect_Output_Data_t*)data);
-  //     break;
-  //   case 2:
-  //     SetEnvelope((USB_FFBReport_SetEnvelope_Output_Data_t*)data,
-  //                 &g_EffectStates[effectId]);
-  //     break;
-  //   case 3:
-  //     SetCondition((USB_FFBReport_SetCondition_Output_Data_t*)data,
-  //                  &g_EffectStates[effectId]);
-  //     break;
-  //   case 4:
-  //     SetPeriodic((USB_FFBReport_SetPeriodic_Output_Data_t*)data,
-  //                 &g_EffectStates[effectId]);
-  //     break;
-  //   case 5:
-  //     SetConstantForce((USB_FFBReport_SetConstantForce_Output_Data_t*)data,
-  //                      &g_EffectStates[effectId]);
-  //     break;
-  //   case 6:
-  //     SetRampForce((USB_FFBReport_SetRampForce_Output_Data_t*)data,
-  //                  &g_EffectStates[effectId]);
-  //     break;
-  //   case 7:
-  //     SetCustomForceData((USB_FFBReport_SetCustomForceData_Output_Data_t*)data);
-  //     break;
-  //   case 8:
-  //     SetDownloadForceSample(
-  //         (USB_FFBReport_SetDownloadForceSample_Output_Data_t*)data);
-  //     break;
-  //   case 9:
-  //     break;
-  //   case 10:
-  //     EffectOperation((USB_FFBReport_EffectOperation_Output_Data_t*)data);
-  //     break;
-  //   case 11:
-  //     BlockFree((USB_FFBReport_BlockFree_Output_Data_t*)data);
-  //     break;
-  //   case 12:
-  //     DeviceControl((USB_FFBReport_DeviceControl_Output_Data_t*)data);
-  //     break;
-  //   case 13:
-  //     DeviceGain((USB_FFBReport_DeviceGain_Output_Data_t*)data);
-  //     break;
-  //   case 14:
-  //     SetCustomForce((USB_FFBReport_SetCustomForce_Output_Data_t*)data);
-  //     break;
-  //   default:
-  //     break;
-  // }
+  switch (data[0])  // reportID
+  {
+    case 1:
+      SetEffect((USB_FFBReport_SetEffect_Output_Data_t*)data);
+      break;
+    case 2:
+      SetEnvelope((USB_FFBReport_SetEnvelope_Output_Data_t*)data);
+      break;
+    case 3:
+      SetCondition((USB_FFBReport_SetCondition_Output_Data_t*)data);
+      break;
+    case 4:
+      SetPeriodic((USB_FFBReport_SetPeriodic_Output_Data_t*)data);
+      break;
+    case 5:
+      SetConstantForce((USB_FFBReport_SetConstantForce_Output_Data_t*)data);
+      break;
+    case 6:
+      SetRampForce((USB_FFBReport_SetRampForce_Output_Data_t*)data);
+      break;
+    case 7:
+      SetCustomForceData((USB_FFBReport_SetCustomForceData_Output_Data_t*)data);
+      break;
+    case 8:
+      SetDownloadForceSample(
+          (USB_FFBReport_SetDownloadForceSample_Output_Data_t*)data);
+      break;
+    case 9:
+      break;
+    case 10:
+      EffectOperation((USB_FFBReport_EffectOperation_Output_Data_t*)data);
+      break;
+    case 11:
+      BlockFree((USB_FFBReport_BlockFree_Output_Data_t*)data);
+      break;
+    case 12:
+      DeviceControl((USB_FFBReport_DeviceControl_Output_Data_t*)data);
+      break;
+    case 13:
+      DeviceGain((USB_FFBReport_DeviceGain_Output_Data_t*)data);
+      break;
+    case 14:
+      SetCustomForce((USB_FFBReport_SetCustomForce_Output_Data_t*)data);
+      break;
+    default:
+      break;
+  }
 }
 
-// void FFB::StopAllEffects(void) {
-//   for (uint8_t id = 0; id <= MAX_EFFECTS; id++) StopEffect(id);
-// }
+/************************************************************************/
+/*                Effect Management                                     */
+/************************************************************************/
 
-// void FFB::StartEffect(uint8_t id) {
-//   if (id > MAX_EFFECTS) return;
-//   g_EffectStates[id].state = MEFFECTSTATE_PLAYING;
-//   g_EffectStates[id].elapsedTime = 0;
-//   g_EffectStates[id].startTime = (uint64_t)millis();
-// }
+void FFB::SetEffect(USB_FFBReport_SetEffect_Output_Data_t* data) {
+  volatile TEffectState* effect = &effectStates[data->effectBlockIndex];
+  effect->state |= MEFFECTSTATE_ALLOCATED;
+  effect->duration = data->duration;
+  effect->directionX = data->directionX;
+  effect->directionY = data->directionY;
+  effect->effectType = data->effectType;
+  effect->gain = data->gain;
+  effect->enableAxis = data->enableAxis;
 
-// void FFB::StopEffect(uint8_t id) {
-//   if (id > MAX_EFFECTS) return;
-//   g_EffectStates[id].state &= ~MEFFECTSTATE_PLAYING;
-//   pidBlockLoad.ramPoolAvailable += SIZE_EFFECT;
-// }
+  Serial.print("Set Effect ");
+  Serial.print(data->effectBlockIndex);
+  Serial.print(" data->duiration=");
+  Serial.print(data->duration);
+  dumpEffect(effectStates[data->effectBlockIndex]);
+}
 
-// void FFB::FreeEffect(uint8_t id) {
-//   if (id > MAX_EFFECTS) return;
-//   g_EffectStates[id].state = 0;
-//   if (id < nextEID) nextEID = id;
-// }
+void FFB::StartEffect(uint8_t id) {
+  if (id > MAX_EFFECTS) return;
+  effectStates[id].state |= MEFFECTSTATE_PLAYING;
+  effectStates[id].elapsedTime = 0;
+  effectStates[id].startTime = (uint64_t)millis();
+  Serial.print("Start Effect ");
+  Serial.print(id);
+  dumpEffect(effectStates[id]);
+}
 
-// void FFB::FreeAllEffects(void) {
-//   nextEID = 1;
-//   memset((void*)&g_EffectStates, 0, sizeof(g_EffectStates));
-//   pidBlockLoad.ramPoolAvailable = MEMORY_SIZE;
-// }
+void FFB::StopEffect(uint8_t id) {
+  if (id > MAX_EFFECTS) return;
+  effectStates[id].state &= ~MEFFECTSTATE_PLAYING;
+}
 
-// void FFB::EffectOperation(USB_FFBReport_EffectOperation_Output_Data_t* data)
-// {
-//   if (data->operation == 1) {  // Start
-//     if (data->loopCount > 0)
-//       g_EffectStates[data->effectBlockIndex].duration *= data->loopCount;
-//     if (data->loopCount == 0xFF)
-//       g_EffectStates[data->effectBlockIndex].duration =
-//       USB_DURATION_INFINITE;
-//     StartEffect(data->effectBlockIndex);
-//   } else if (data->operation == 2) {  // StartSolo
+void FFB::StopAllEffects(void) {
+  for (uint8_t id = 0; id <= MAX_EFFECTS; id++) {
+    StopEffect(id);
+  }
+}
 
-//     // Stop all first
-//     StopAllEffects();
-//     // Then start the given effect
-//     StartEffect(data->effectBlockIndex);
-//   } else if (data->operation == 3) {  // Stop
-//     StopEffect(data->effectBlockIndex);
-//   } else {
-//   }
-// }
+void FFB::FreeEffect(uint8_t id) {
+  if (id > MAX_EFFECTS) return;
+  effectStates[id].state = MEFFECTSTATE_FREE;
+}
 
-// void FFB::BlockFree(USB_FFBReport_BlockFree_Output_Data_t* data) {
-//   uint8_t eid = data->effectBlockIndex;
+void FFB::FreeAllEffects(void) {
+  memset((void*)&effectStates, 0, sizeof(effectStates));
+}
 
-//   if (eid == 0xFF) {  // all effects
-//     FreeAllEffects();
-//   } else {
-//     FreeEffect(eid);
-//   }
-// }
+void FFB::EffectOperation(USB_FFBReport_EffectOperation_Output_Data_t* data) {
+  if (data->operation == 1) {  // Start
+    if (data->loopCount > 0)
+      effectStates[data->effectBlockIndex].duration *= data->loopCount;
+    if (data->loopCount == 0xFF)
+      effectStates[data->effectBlockIndex].duration = USB_DURATION_INFINITE;
+    StartEffect(data->effectBlockIndex);
+  } else if (data->operation == 2) {  // StartSolo
+    // Stop all first
+    StopAllEffects();
+    // Then start the given effect
+    StartEffect(data->effectBlockIndex);
+  } else if (data->operation == 3) {  // Stop
+    StopEffect(data->effectBlockIndex);
+  }
+}
 
-// void FFB::DeviceControl(USB_FFBReport_DeviceControl_Output_Data_t* data) {
-//   uint8_t control = data->control;
+void FFB::BlockFree(USB_FFBReport_BlockFree_Output_Data_t* data) {
+  uint8_t eid = data->effectBlockIndex;
 
-//   if (control == 0x01) {  // 1=Enable Actuators
-//     pidState.status |= 2;
-//   } else if (control == 0x02) {  // 2=Disable Actuators
-//     pidState.status &= ~(0x02);
-//   } else if (control == 0x03) {  // 3=Stop All Effects
-//     StopAllEffects();
-//   } else if (control == 0x04) {  //  4=Reset
-//     FreeAllEffects();
-//   } else if (control == 0x05) {  // 5=Pause
-//     devicePaused = 1;
-//   } else if (control == 0x06) {  // 6=Continue
-//     devicePaused = 0;
-//   } else if (control & (0xFF - 0x3F)) {
-//   }
-// }
+  if (eid == 0xFF) {  // all effects
+    FreeAllEffects();
+  } else {
+    FreeEffect(eid);
+  }
+}
 
-// void FFB::DeviceGain(USB_FFBReport_DeviceGain_Output_Data_t* data) {
-//   deviceGain.gain = data->gain;
-// }
+void FFB::DeviceControl(USB_FFBReport_DeviceControl_Output_Data_t* data) {
+  uint8_t control = data->control;
 
-// void FFB::SetCustomForce(USB_FFBReport_SetCustomForce_Output_Data_t* data) {}
+  if (control == 0x01) {  // 1=Enable Actuators
+    actuatorEnabled = 1;
+  } else if (control == 0x02) {  // 2=Disable Actuators
+    actuatorEnabled = 0;
+  } else if (control == 0x03) {  // 3=Stop All Effects
+    StopAllEffects();
+  } else if (control == 0x04) {  //  4=Reset
+    FreeAllEffects();
+  } else if (control == 0x05) {  // 5=Pause
+    devicePaused = 1;
+  } else if (control == 0x06) {  // 6=Continue
+    devicePaused = 0;
+  } else if (control & (0xFF - 0x3F)) {
+  }
+}
 
-// void FFB::SetCustomForceData(
-//     USB_FFBReport_SetCustomForceData_Output_Data_t* data) {}
+void FFB::DeviceGain(USB_FFBReport_DeviceGain_Output_Data_t* data) {
+  deviceGain = data->gain;
+}
 
-// void FFB::SetDownloadForceSample(
-//     USB_FFBReport_SetDownloadForceSample_Output_Data_t* data) {}
+void FFB::SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t* data) {
+  volatile TEffectState* effect = &effectStates[data->effectBlockIndex];
+  effect->attackLevel = data->attackLevel;
+  effect->fadeLevel = data->fadeLevel;
+  effect->attackTime = data->attackTime;
+  effect->fadeTime = data->fadeTime;
+}
 
-// void FFB::SetEffect(USB_FFBReport_SetEffect_Output_Data_t* data) {
-//   volatile TEffectState* effect = &g_EffectStates[data->effectBlockIndex];
+void FFB::SetCondition(USB_FFBReport_SetCondition_Output_Data_t* data) {
+  volatile TEffectState* effect = &effectStates[data->effectBlockIndex];
+  uint8_t axis = data->parameterBlockOffset;
+  effect->conditions[axis].cpOffset = data->cpOffset;
+  effect->conditions[axis].positiveCoefficient = data->positiveCoefficient;
+  effect->conditions[axis].negativeCoefficient = data->negativeCoefficient;
+  effect->conditions[axis].positiveSaturation = data->positiveSaturation;
+  effect->conditions[axis].negativeSaturation = data->negativeSaturation;
+  effect->conditions[axis].deadBand = data->deadBand;
+  effect->conditionBlocksCount++;
+}
 
-//   effect->duration = data->duration;
-//   effect->directionX = data->directionX;
-//   effect->directionY = data->directionY;
-//   effect->effectType = data->effectType;
-//   effect->gain = data->gain;
-//   effect->enableAxis = data->enableAxis;
-// }
+void FFB::SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t* data) {
+  volatile TEffectState* effect = &effectStates[data->effectBlockIndex];
+  effect->magnitude = data->magnitude;
+  effect->offset = data->offset;
+  effect->phase = data->phase;
+  effect->period = data->period;
+}
 
-// void FFB::SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t* data,
-//                       volatile TEffectState* effect) {
-//   effect->attackLevel = data->attackLevel;
-//   effect->fadeLevel = data->fadeLevel;
-//   effect->attackTime = data->attackTime;
-//   effect->fadeTime = data->fadeTime;
-// }
+void FFB::SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t* data) {
+  volatile TEffectState* effect = &effectStates[data->effectBlockIndex];
+  effect->magnitude = data->magnitude;
+}
 
-// void FFB::SetCondition(USB_FFBReport_SetCondition_Output_Data_t* data,
-//                        volatile TEffectState* effect) {
-//   uint8_t axis = data->parameterBlockOffset;
-//   effect->conditions[axis].cpOffset = data->cpOffset;
-//   effect->conditions[axis].positiveCoefficient = data->positiveCoefficient;
-//   effect->conditions[axis].negativeCoefficient = data->negativeCoefficient;
-//   effect->conditions[axis].positiveSaturation = data->positiveSaturation;
-//   effect->conditions[axis].negativeSaturation = data->negativeSaturation;
-//   effect->conditions[axis].deadBand = data->deadBand;
-//   effect->conditionBlocksCount++;
-// }
+void FFB::SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t* data) {
+  volatile TEffectState* effect = &effectStates[data->effectBlockIndex];
+  effect->startMagnitude = data->startMagnitude;
+  effect->endMagnitude = data->endMagnitude;
+}
 
-// void FFB::SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t* data,
-//                       volatile TEffectState* effect) {
-//   effect->magnitude = data->magnitude;
-//   effect->offset = data->offset;
-//   effect->phase = data->phase;
-//   effect->period = data->period;
-// }
+// NOT IMPLEMENTED
+void FFB::SetCustomForce(USB_FFBReport_SetCustomForce_Output_Data_t* data) {}
 
-// void FFB::SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t*
-// data,
-//                            volatile TEffectState* effect) {
-//   //  ReportPrint(*effect);
-//   effect->magnitude = data->magnitude;
-// }
+void FFB::SetCustomForceData(
+    USB_FFBReport_SetCustomForceData_Output_Data_t* data) {}
 
-// void FFB::SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t* data,
-//                        volatile TEffectState* effect) {
-//   effect->startMagnitude = data->startMagnitude;
-//   effect->endMagnitude = data->endMagnitude;
-// }
+void FFB::SetDownloadForceSample(
+    USB_FFBReport_SetDownloadForceSample_Output_Data_t* data) {}
 
-void FFB::getForce(int32_t* forces) { forceCalculator(forces); }
+/************************************************************************/
+/*                Effect Simulation                                     */
+/************************************************************************/
+
+void FFB::getForce(int32_t* forces) {
+  forces[0] = 0;
+  forces[1] = 0;
+
+  // go through each effect block
+  for (int id = 0; id < MAX_EFFECTS; id++) {
+    volatile TEffectState& effect = effectStates[id];
+    // if (effect.state != 0) {
+    //   Serial.print(id);
+    //   Serial.print(" pause=");
+    //   Serial.print(devicePaused);
+    //   dumpEffect(effect);
+    // }
+    bool effectPlaying = ((effect.state & MEFFECTSTATE_PLAYING) != 0) &&
+                         ((effect.elapsedTime <= effect.duration) ||
+                          (effect.duration == USB_DURATION_INFINITE));
+    if (!devicePaused && effectPlaying) {
+      // Serial.print(id);
+      // dumpEffect(effect);
+      forces[0] += getEffectForce(effect, m_gains[0], m_effect_params[0], 0);
+      forces[1] += getEffectForce(effect, m_gains[1], m_effect_params[1], 1);
+    }
+  }
+  forces[0] = (int32_t)((float)1.0 * forces[0] * m_gains[0].totalGain /
+                        10000);  // each effect gain * total effect gain = 10000
+  forces[1] = (int32_t)((float)1.0 * forces[1] * m_gains[1].totalGain /
+                        10000);  // each effect gain * total effect gain = 10000
+  forces[0] = map(forces[0], -10000, 10000, -255, 255);
+  forces[1] = map(forces[1], -10000, 10000, -255, 255);
+}
 
 int32_t FFB::getEffectForce(volatile TEffectState& effect, Gains _gains,
                             EffectParams _effect_params, uint8_t axis) {
@@ -317,31 +361,6 @@ int32_t FFB::getEffectForce(volatile TEffectState& effect, Gains _gains,
   return force;
 }
 
-void FFB::forceCalculator(int32_t* forces) {
-  forces[0] = 0;
-  forces[1] = 0;
-  for (int id = 0; id < MAX_EFFECTS; id++) {
-    // volatile TEffectState& effect = pidReportHandler.g_EffectStates[id];
-    // if ((effect.state == MEFFECTSTATE_PLAYING) &&
-    //     ((effect.elapsedTime <= effect.duration) ||
-    //      (effect.duration == USB_DURATION_INFINITE)) &&
-    //     !pidReportHandler.devicePaused) {
-    //   forces[0] +=
-    //       (int32_t)(getEffectForce(effect, m_gains[0], m_effect_params[0],
-    //       0));
-    //   forces[1] +=
-    //       (int32_t)(getEffectForce(effect, m_gains[1], m_effect_params[1],
-    //       1));
-    // }
-  }
-  forces[0] = (int32_t)((float)1.0 * forces[0] * m_gains[0].totalGain /
-                        10000);  // each effect gain * total effect gain = 10000
-  forces[1] = (int32_t)((float)1.0 * forces[1] * m_gains[1].totalGain /
-                        10000);  // each effect gain * total effect gain = 10000
-  forces[0] = map(forces[0], -10000, 10000, -255, 255);
-  forces[1] = map(forces[1], -10000, 10000, -255, 255);
-}
-
 int32_t FFB::ConstantForceCalculator(volatile TEffectState& effect) {
   return ApplyEnvelope(effect, (int32_t)effect.magnitude);
 }
@@ -366,12 +385,14 @@ int32_t FFB::SquareForceCalculator(volatile TEffectState& effect) {
   int32_t minMagnitude = offset - magnitude;
   uint32_t phasetime = (phase * period) / 255;
   uint32_t timeTemp = elapsedTime + phasetime;
-  uint32_t reminder = timeTemp % period;
-  int32_t tempforce;
-  if (reminder > (period / 2))
-    tempforce = minMagnitude;
-  else
-    tempforce = maxMagnitude;
+  int32_t tempforce = 0;
+  if (period > 0) {
+    uint32_t reminder = timeTemp % period;
+    if (reminder > (period / 2))
+      tempforce = minMagnitude;
+    else
+      tempforce = maxMagnitude;
+  }
   return ApplyEnvelope(effect, tempforce);
 }
 
@@ -469,15 +490,6 @@ int32_t FFB::ConditionForceCalculator(volatile TEffectState& effect,
   positiveSaturation = effect.conditions[axis].positiveSaturation;
   positiveCoefficient = effect.conditions[axis].positiveCoefficient;
 
-  // Serial.print("Calc Contion: metric=");
-  // Serial.print(metric);
-  // Serial.print(", cpOffset=");
-  // Serial.print(cpOffset);
-  // Serial.print(", posCoeff=");
-  // Serial.print(positiveCoefficient);
-  // Serial.print(", negCoeff=");
-  // Serial.print(negativeCoefficient);
-
   float tempForce = 0;
   if (metric < (cpOffset - deadBand)) {
     tempForce = (metric - 1.00f * (cpOffset - deadBand)) *
@@ -505,8 +517,6 @@ int32_t FFB::ConditionForceCalculator(volatile TEffectState& effect,
     default:
       break;
   }
-  // Serial.print(", force=");
-  // Serial.println((int32_t)tempForce);
   return (int32_t)tempForce;
 }
 
@@ -529,15 +539,15 @@ int32_t FFB::ApplyEnvelope(volatile TEffectState& effect, int32_t value) {
   int32_t elapsedTime = effect.elapsedTime;
   int32_t duration = effect.duration;
 
-  if (elapsedTime < attackTime) {
+  if (attackTime != 0 && elapsedTime < attackTime) {
     newValue = (magnitude - attackLevel) * elapsedTime / attackTime;
     newValue += attackLevel;
   }
-  if (elapsedTime > (duration - fadeTime)) {
+  if (fadeTime != 0 && elapsedTime > (duration - fadeTime)) {
     newValue = (magnitude - fadeLevel) * (duration - elapsedTime);
     newValue /= fadeTime;
     newValue += fadeLevel;
   }
-  newValue = newValue * value / magnitude;
+  newValue = (magnitude != 0) ? (newValue * value / magnitude) : 0;
   return newValue;
 }

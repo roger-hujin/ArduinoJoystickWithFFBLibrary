@@ -18,6 +18,8 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#ifndef ESP32
+
 #include "Joystick.h"
 
 #include "FFBDescriptor.h"
@@ -458,6 +460,9 @@ Joystick_::Joystick_(uint8_t hidReportId, uint8_t joystickType,
   for (int index = 0; index < _buttonValuesArraySize; index++) {
     _buttonValues[index] = 0;
   }
+
+  // ffb module
+  ffbModule = nullptr;
 }
 
 void Joystick_::begin(bool initAutoSendState, PacketSerial* effectChannel) {
@@ -468,7 +473,8 @@ void Joystick_::begin(bool initAutoSendState, PacketSerial* effectChannel) {
   if (effectChannel) {
     DynamicHID().GetPIDReportHandler().SetEffectChannel(effectChannel);
   } else {
-    DynamicHID().GetPIDReportHandler().SetEffectModule(new FFB());
+    // ffbModule = new FFB();
+    DynamicHID().GetPIDReportHandler().SetEffectModule(ffbModule);
   }
 
   sendState();
@@ -476,7 +482,10 @@ void Joystick_::begin(bool initAutoSendState, PacketSerial* effectChannel) {
 
 void Joystick_::end() {}
 
-void Joystick_::update() { DynamicHID().RecvfromUsb(); }
+void Joystick_::update() {
+  DynamicHID().GetPIDReportHandler().commandSentThisUpdate = 0;
+  DynamicHID().RecvfromUsb();
+}
 
 void Joystick_::setButton(uint8_t button, uint8_t value) {
   if (value == 0) {
@@ -681,4 +690,23 @@ void Joystick_::sendState() {
   DynamicHID().SendReport(_hidReportId, data, _hidReportSize);
 }
 
+void Joystick_::getForce(int32_t* forces) {
+  if (ffbModule) {
+    ffbModule->getForce(forces);
+  }
+}
+int8_t Joystick_::setGains(Gains* _gains) {
+  if (ffbModule) {
+    ffbModule->setGains(_gains);
+  }
+}
+// set effect params funtions
+int8_t Joystick_::setEffectParams(EffectParams* _effect_params) {
+  if (ffbModule) {
+    ffbModule->setEffectParams(_effect_params);
+  }
+}
+
 #endif
+
+#endif  // ESP32

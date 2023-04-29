@@ -25,6 +25,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+#ifndef ESP32  // NO PluggableUSB.h in ESP32
 #ifdef _VARIANT_ARDUINO_DUE_X_
 // The following values are the same as AVR's USBAPI.h
 // Reproduced here because SAM doesn't have these in
@@ -35,6 +36,7 @@
 #include "USB/PluggableUSB.h"
 #else
 #include "PluggableUSB.h"
+#endif
 #endif
 
 #include "../FFB/PIDReportHandler.h"

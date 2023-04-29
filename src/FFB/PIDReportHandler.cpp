@@ -38,12 +38,6 @@ void PIDReportHandler::CreateNewEffect(
     // reduce RAM pool size
     pidBlockLoad.ramPoolAvailable -= SIZE_EFFECT;
   }
-
-  Serial.print(pidBlockLoad.effectBlockIndex);
-  Serial.print(",");
-  Serial.print(pidBlockLoad.loadStatus);
-  Serial.print(",");
-  Serial.println(pidBlockLoad.ramPoolAvailable);
 }
 
 void PIDReportHandler::ProcessUsbData(uint8_t* data, uint16_t len) {
@@ -127,6 +121,7 @@ void PIDReportHandler::BlockFree(USB_FFBReport_BlockFree_Output_Data_t* data) {
 }
 
 void PIDReportHandler::SendToEffectModule(uint8_t* data, uint16_t len) {
+  commandSentThisUpdate++;
   if (effectChannel) {
     effectChannel->send(data, len);
   } else if (effectModule) {

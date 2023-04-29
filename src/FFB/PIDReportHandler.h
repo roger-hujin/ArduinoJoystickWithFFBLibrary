@@ -46,5 +46,7 @@ class PIDReportHandler {
   uint8_t* getPIDStatus();
   uint8_t* getPIDBlockLoad();
   void clearPIDBlockLoadFlag();
+
+  uint16_t commandSentThisUpdate = 0;
 };
 #endif

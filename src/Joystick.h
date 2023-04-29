@@ -114,6 +114,9 @@ class Joystick_ {
   uint8_t _hidReportId;
   uint8_t _hidReportSize;
 
+  // Effect module
+  FFB* ffbModule;
+
  protected:
   int buildAndSet16BitValue(bool includeValue, int16_t value,
                             int16_t valueMinimum, int16_t valueMaximum,
@@ -215,23 +218,13 @@ class Joystick_ {
   // force feedback Interfaces
   void getForce(int32_t* forces);
   // set gain functions
-  int8_t setGains(Gains* _gains) {
-    // if (_gains != nullptr) {
-    //   // it should be added some limition here,but im so tired,it's 2:24 A.M
-    //   // now!
-    //   m_gains = _gains;
-    //   return 0;
-    // }
-    return -1;
-  };
+  int8_t setGains(Gains* _gains);
   // set effect params funtions
-  int8_t setEffectParams(EffectParams* _effect_params){
-      // if (_effect_params != nullptr) {
-      //   m_effect_params = _effect_params;
-      //   return 0;
-      // }
-      // return -1;
-  };
+  int8_t setEffectParams(EffectParams* _effect_params);
+  // get number of commands sent each update
+  uint16_t getCommandSentThisUpdate() {
+    return DynamicHID().GetPIDReportHandler().commandSentThisUpdate;
+  }
 };
 
 #endif  // !defined(_USING_DYNAMIC_HID)
